@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using CodeMonkey;
 using CodeMonkey.Utils;
+using System;
 
 public class GameHandler : MonoBehaviour
 {
@@ -32,11 +33,17 @@ public class GameHandler : MonoBehaviour
     private AnimationType activeAnimationType;
 
     private void Start() {
-        PlayAnimation(AnimationType.Idle);  
+        CharacterMovement charMovement = GetComponent<CharacterMovement>();
+        charMovement.OnKeyPress += MoveCharacter; //subscribe
+
+
+
+
+        PlayAnimation(AnimationType.Idle); 
     }
 
     private void Update() {
-        MoveCharacter();
+        // MoveCharacter();
     }
 
     private void PlayAnimation(AnimationType animationType)
@@ -76,9 +83,9 @@ public class GameHandler : MonoBehaviour
         }
     }
     
-    private void MoveCharacter(){
+    private void MoveCharacter(object sender, CharacterMovement.OnKeyPressEventArgs e){
         bool isMoving = false;
-        string key = " ";
+        string key = e.keyValue;
 
         if (Input.GetKey(KeyCode.W)){
             isMoving = true;
@@ -138,5 +145,23 @@ public class GameHandler : MonoBehaviour
         else{
             PlayAnimation(AnimationType.Idle);
         }
+
+        Debug.Log(key);
+    }
+
+    // private void TestEvents_OnKeyPress(object sender, CharacterMovement.OnKeyPressEventArgs e)
+    // {
+    //     Debug.Log("I have triggered OnKeyPress event " + e.keyCount);
+    // }
+    // private void TestEvents_OnKeyPressDirection(object sender, CharacterMovement.OnKeyPressEventArgs e)
+    // {
+    //     Debug.Log("Direction of movement: " + e.keyValue);
+    // }
+
+    void OnDestroy()
+    {
+        CharacterMovement charMovement = GetComponent<CharacterMovement>();
+        if(charMovement != null)
+            charMovement.OnKeyPress -= MoveCharacter;
     }
 }

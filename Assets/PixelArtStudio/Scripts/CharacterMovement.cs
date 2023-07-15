@@ -7,7 +7,13 @@ public class CharacterMovement : MonoBehaviour
 {
     public event EventHandler OnAnimationLooped;
     public event EventHandler OnAnimationLoopedFirst;
-    public event EventHandler OnKeyPress;
+
+    //Generic version of EventHandler, pass in our specific EventArgs as in generic parameter
+    public event EventHandler<OnKeyPressEventArgs> OnKeyPress;
+    public class OnKeyPressEventArgs : EventArgs{
+        public int keyCount;    //field
+        public string keyValue;
+    }
 
     [SerializeField] private Sprite[] spriteArray; 
     private int currentFrame;
@@ -18,6 +24,8 @@ public class CharacterMovement : MonoBehaviour
     private bool isAnimating = true;
     private int loopCounter = 0;
     private float speed = 10f;
+    private int keyCount;
+    private string keyValue;
 
     private void Awake() {
         spriteRenderer = gameObject.GetComponent<SpriteRenderer>();
@@ -27,6 +35,7 @@ public class CharacterMovement : MonoBehaviour
     void Start()
     {
         Debug.Log("I have reached the Debug.Log: ");
+        // OnKeyPress += Test_OnKeyPress; // Subscribe to event
     }
 
     // Update is called once per frame
@@ -55,16 +64,32 @@ public class CharacterMovement : MonoBehaviour
 
         if (Input.GetKey(KeyCode.W)){
             moveY = 1;
-            OnKeyPress?.Invoke(this, EventArgs.Empty);
+            keyCount++;
+            keyValue = "W";
+            OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyCount = keyCount }); //Invoke key press if not null
+            OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyValue = keyValue }); //Invoke key press if not null
         }
         if (Input.GetKey(KeyCode.A)){
             moveX = -1;
+            keyCount++;
+            keyValue = "A";
+            OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyCount = keyCount }); //Invoke key press if not null
+            OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyValue = keyValue }); //Invoke key press if not null
+
         }
         if (Input.GetKey(KeyCode.S)){
             moveY = -1;
+            keyCount++;
+            keyValue = "S";
+            OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyCount = keyCount }); //Invoke key press if not null
+            OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyValue = keyValue }); //Invoke key press if not null
         }
         if (Input.GetKey(KeyCode.D)){
             moveX = 1;
+            keyCount++;
+            keyValue = "D";
+            OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyCount = keyCount }); //Invoke key press if not null
+            OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyValue = keyValue }); //Invoke key press if not null
         }
 
         Vector3 moveDir = new Vector3(moveX, moveY).normalized;
@@ -73,7 +98,7 @@ public class CharacterMovement : MonoBehaviour
 
     private void HandleAnimation()
     {
-        if (!isAnimating)
+        if (!isAnimating || spriteArray == null || spriteArray.Length == 0)
             return;
         
         timer += Time.deltaTime;
@@ -102,4 +127,10 @@ public class CharacterMovement : MonoBehaviour
             }
         }
     }
+
+    // private void Test_OnKeyPress(object sender, EventArgs e)
+    // {
+    //     Debug.Log("I have triggered OnKeyPress event DELETED VERSION");
+    // }
+
 }
