@@ -32,7 +32,6 @@ public class GameHandler : MonoBehaviour
 
     void OnDestroy()
     {
-        CharacterMovement charMovement = GetComponent<CharacterMovement>();
         if(charMovement != null)
             charMovement.OnKeyPress -= MoveCharacter;
     }

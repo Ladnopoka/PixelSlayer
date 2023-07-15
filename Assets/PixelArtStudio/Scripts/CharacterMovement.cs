@@ -47,6 +47,7 @@ public class CharacterMovement : MonoBehaviour
     private float speed = 10f;
     private int keyCount;
     private string keyValue;
+    private string lastKeyValue;
     private AnimationType activeAnimationType;
 
     private void Awake() {
@@ -80,83 +81,55 @@ public class CharacterMovement : MonoBehaviour
         spriteRenderer.sprite = spriteArray[currentFrame];
     }
 
+    // Dictionary for mapping key combinations to animation types and keyValues
+    private Dictionary<(float moveX, float moveY), (AnimationType animationType, string keyValue)> keyToAnimationMap = new Dictionary<(float, float), (AnimationType, string)>
+    {
+        {(0, 1), (AnimationType.RunUp, "W")},
+        {(-1, 0), (AnimationType.RunLeft, "A")},
+        {(0, -1), (AnimationType.RunDown, "S")},
+        {(1, 0), (AnimationType.RunRight, "D")},
+        {(-1, 1), (AnimationType.RunUpLeft, "WA")},
+        {(-1, -1), (AnimationType.RunLeftDown, "AS")},
+        {(1, -1), (AnimationType.RunDownRight, "SD")},
+        {(1, 1), (AnimationType.RunUpRight, "WD")}
+    };
+
     private void HandleMovement()
     {
-        bool isMoving = false;
         float moveX = 0, moveY = 0;
+        bool isMoving = false;
 
         if (Input.GetKey(KeyCode.W)){
             moveY = 1;
-            keyCount++;
-            keyValue = "W";
             isMoving = true;
-            OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyValue = keyValue }); //Invoke key press if not null
         }
         if (Input.GetKey(KeyCode.A)){
             moveX = -1;
-            keyCount++;
-            keyValue = "A";
-            isMoving = true;
-            OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyValue = keyValue }); //Invoke key press if not null
+            isMoving = true;      
         }
         if (Input.GetKey(KeyCode.S)){
             moveY = -1;
-            keyCount++;
-            keyValue = "S";
             isMoving = true;
-            OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyValue = keyValue }); //Invoke key press if not null
         }
         if (Input.GetKey(KeyCode.D)){
             moveX = 1;
-            keyCount++;
-            keyValue = "D";
-            isMoving = true;
-            OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyValue = keyValue }); //Invoke key press if not null
-        }
-        if (Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.A)){
-            keyValue = "WA";
-            isMoving = true;
-            OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyValue = keyValue }); //Invoke key press if not null
-        }
-        if (Input.GetKey(KeyCode.A) && Input.GetKey(KeyCode.S)){
-
-            keyValue = "AS";
-            isMoving = true;
-            OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyValue = keyValue }); //Invoke key press if not null
-        }
-        if (Input.GetKey(KeyCode.S) && Input.GetKey(KeyCode.D)){
-
-            keyValue = "SD";
-            isMoving = true;
-            OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyValue = keyValue }); //Invoke key press if not null
-        }
-        if (Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.D)){
-
-            keyValue = "WD";
-            isMoving = true;
-            OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyValue = keyValue }); //Invoke key press if not null
-        }
+            isMoving = true;      
+        }        
 
         if (isMoving){
-            if (keyValue == "W")
-                PlayAnimation(AnimationType.RunUp); 
-            if (keyValue == "A")
-                PlayAnimation(AnimationType.RunLeft); 
-            if (keyValue == "S")
-                PlayAnimation(AnimationType.RunDown); 
-            if (keyValue == "D")
-                PlayAnimation(AnimationType.RunRight);
-            if (keyValue == "WA")
-                PlayAnimation(AnimationType.RunUpLeft); 
-            if (keyValue == "AS")
-                PlayAnimation(AnimationType.RunLeftDown); 
-            if (keyValue == "SD")
-                PlayAnimation(AnimationType.RunDownRight); 
-            if (keyValue == "WD")
-                PlayAnimation(AnimationType.RunUpRight);
+            var key = (moveX, moveY);
+            if (keyToAnimationMap.TryGetValue(key, out var value)){
+                PlayAnimation(value.animationType);
+                keyValue = value.keyValue;
+                if (lastKeyValue != keyValue){
+                    lastKeyValue = keyValue;
+                    OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyValue = keyValue }); //Invoke key press if not null
+                }
+            }
         }
         else{
             PlayAnimation(AnimationType.Idle);
+            keyValue = "IDLE";
         }
 
         Vector3 moveDir = new Vector3(moveX, moveY).normalized;
