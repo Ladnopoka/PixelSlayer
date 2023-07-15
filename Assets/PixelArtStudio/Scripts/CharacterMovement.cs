@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
-public class MovementTest : MonoBehaviour
+public class CharacterMovement : MonoBehaviour
 {
     public event EventHandler OnAnimationLooped;
     public event EventHandler OnAnimationLoopedFirst;
+    public event EventHandler OnKeyPress;
 
     [SerializeField] private Sprite[] spriteArray; 
     private int currentFrame;
@@ -54,6 +55,7 @@ public class MovementTest : MonoBehaviour
 
         if (Input.GetKey(KeyCode.W)){
             moveY = 1;
+            OnKeyPress?.Invoke(this, EventArgs.Empty);
         }
         if (Input.GetKey(KeyCode.A)){
             moveX = -1;

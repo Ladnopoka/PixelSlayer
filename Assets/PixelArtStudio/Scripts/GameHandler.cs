@@ -6,7 +6,7 @@ using CodeMonkey.Utils;
 
 public class GameHandler : MonoBehaviour
 {
-    [SerializeField] private MovementTest movementTest; 
+    [SerializeField] private CharacterMovement characterMovement; 
     [SerializeField] private Sprite[] idleAnimationFrameArray;
     [SerializeField] private Sprite[] runUpAnimationFrameArray;
     [SerializeField] private Sprite[] runLeftAnimationFrameArray;
@@ -46,31 +46,31 @@ public class GameHandler : MonoBehaviour
 
             switch (animationType){
                 case AnimationType.Idle:
-                    movementTest.PlayAnimation(idleAnimationFrameArray, .11f);
+                    characterMovement.PlayAnimation(idleAnimationFrameArray, .11f);
                     break;
                 case AnimationType.RunUp:
-                    movementTest.PlayAnimation(runUpAnimationFrameArray, .1f);
+                    characterMovement.PlayAnimation(runUpAnimationFrameArray, .1f);
                     break;
                 case AnimationType.RunLeft:
-                    movementTest.PlayAnimation(runLeftAnimationFrameArray, .1f);
+                    characterMovement.PlayAnimation(runLeftAnimationFrameArray, .1f);
                     break;
                 case AnimationType.RunDown:
-                    movementTest.PlayAnimation(runDownAnimationFrameArray, .1f);
+                    characterMovement.PlayAnimation(runDownAnimationFrameArray, .1f);
                     break;
                 case AnimationType.RunRight:
-                    movementTest.PlayAnimation(runRightAnimationFrameArray, .1f);
+                    characterMovement.PlayAnimation(runRightAnimationFrameArray, .1f);
                     break;
                 case AnimationType.RunUpLeft:
-                    movementTest.PlayAnimation(runUpLeftAnimationFrameArray, .1f);
+                    characterMovement.PlayAnimation(runUpLeftAnimationFrameArray, .1f);
                     break;
                 case AnimationType.RunLeftDown:
-                    movementTest.PlayAnimation(runLeftDownAnimationFrameArray, .1f);
+                    characterMovement.PlayAnimation(runLeftDownAnimationFrameArray, .1f);
                     break;
                 case AnimationType.RunDownRight:
-                    movementTest.PlayAnimation(runDownRightAnimationFrameArray, .1f);
+                    characterMovement.PlayAnimation(runDownRightAnimationFrameArray, .1f);
                     break;
                 case AnimationType.RunUpRight:
-                    movementTest.PlayAnimation(runUpRightAnimationFrameArray, .1f);
+                    characterMovement.PlayAnimation(runUpRightAnimationFrameArray, .1f);
                     break;
             }
         }
