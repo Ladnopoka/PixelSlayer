@@ -5,7 +5,14 @@ using System;
 
 public class CharacterMovement : MonoBehaviour
 {
-    [SerializeField] private Sprite[] idleAnimationFrameArray;
+    [SerializeField] private Sprite[] idleUpAnimationFrameArray;
+    [SerializeField] private Sprite[] idleLeftAnimationFrameArray;
+    [SerializeField] private Sprite[] idleDownAnimationFrameArray;
+    [SerializeField] private Sprite[] idleRightAnimationFrameArray;
+    [SerializeField] private Sprite[] idleUpLeftAnimationFrameArray;
+    [SerializeField] private Sprite[] idleLeftDownAnimationFrameArray;
+    [SerializeField] private Sprite[] idleDownRightAnimationFrameArray;
+    [SerializeField] private Sprite[] idleUpRightAnimationFrameArray;
     [SerializeField] private Sprite[] runUpAnimationFrameArray;
     [SerializeField] private Sprite[] runLeftAnimationFrameArray;
     [SerializeField] private Sprite[] runDownAnimationFrameArray;
@@ -15,9 +22,16 @@ public class CharacterMovement : MonoBehaviour
     [SerializeField] private Sprite[] runDownRightAnimationFrameArray;
     [SerializeField] private Sprite[] runUpRightAnimationFrameArray;
 
-    private enum AnimationType
+    public enum AnimationType
     {
-        Idle,
+        IdleUp,
+        IdleLeft,
+        IdleDown,
+        IdleRight,
+        IdleUpLeft,
+        IdleLeftDown,
+        IdleDownRight,
+        IdleUpRight,
         RunUp,
         RunLeft,
         RunDown,
@@ -31,9 +45,12 @@ public class CharacterMovement : MonoBehaviour
     //Generic version of EventHandler, pass in our specific EventArgs as in generic parameter
     public event EventHandler<OnKeyPressEventArgs> OnKeyPress;
     public class OnKeyPressEventArgs : EventArgs{
-        public int keyCount;    //field
         public string keyValue;
-        AnimationType AnimationType;
+    }
+
+    public event EventHandler<OnAnimationChangeEventArgs> OnAnimationChange;
+    public class OnAnimationChangeEventArgs : EventArgs {
+        public AnimationType AnimationType;
     }
 
     [SerializeField] private Sprite[] spriteArray; 
@@ -49,6 +66,7 @@ public class CharacterMovement : MonoBehaviour
     private string keyValue;
     private string lastKeyValue;
     private AnimationType activeAnimationType;
+    private (float, float) lastMoveKey;
 
     private void Awake() {
         spriteRenderer = gameObject.GetComponent<SpriteRenderer>();
@@ -58,7 +76,7 @@ public class CharacterMovement : MonoBehaviour
     void Start()
     {
         Debug.Log("I have reached the Debug.Log: ");
-        PlayAnimation(AnimationType.Idle);
+        PlayAnimation(AnimationType.IdleDown);
     }
 
     // Update is called once per frame
@@ -82,22 +100,24 @@ public class CharacterMovement : MonoBehaviour
     }
 
     // Dictionary for mapping key combinations to animation types and keyValues
-    private Dictionary<(float moveX, float moveY), (AnimationType animationType, string keyValue)> keyToAnimationMap = new Dictionary<(float, float), (AnimationType, string)>
+    private Dictionary<(float moveX, float moveY), (AnimationType animationType, AnimationType idleAnimationType, string keyValue)> keyToAnimationMap = new Dictionary<(float, float), (AnimationType, AnimationType, string)>
     {
-        {(0, 1), (AnimationType.RunUp, "W")},
-        {(-1, 0), (AnimationType.RunLeft, "A")},
-        {(0, -1), (AnimationType.RunDown, "S")},
-        {(1, 0), (AnimationType.RunRight, "D")},
-        {(-1, 1), (AnimationType.RunUpLeft, "WA")},
-        {(-1, -1), (AnimationType.RunLeftDown, "AS")},
-        {(1, -1), (AnimationType.RunDownRight, "SD")},
-        {(1, 1), (AnimationType.RunUpRight, "WD")}
+        {(0, 1), (AnimationType.RunUp, AnimationType.IdleUp, "W")},
+        {(-1, 0), (AnimationType.RunLeft, AnimationType.IdleLeft, "A")},
+        {(0, -1), (AnimationType.RunDown, AnimationType.IdleDown, "S")},
+        {(1, 0), (AnimationType.RunRight, AnimationType.IdleRight, "D")},
+        {(-1, 1), (AnimationType.RunUpLeft, AnimationType.IdleUpLeft, "WA")},
+        {(-1, -1), (AnimationType.RunLeftDown, AnimationType.IdleLeftDown, "AS")},
+        {(1, -1), (AnimationType.RunDownRight, AnimationType.IdleDownRight, "SD")},
+        {(1, 1), (AnimationType.RunUpRight, AnimationType.IdleUpRight, "WD")}
     };
 
     private void HandleMovement(float moveX, float moveY, bool isMoving)
     {
+        var key = isMoving ? (moveX, moveY) : lastMoveKey; //This line is creating a tuple that stores two integer values, moveX and moveY. moveX and moveY are integers that are set based on which movement keys are being pressed.
+        
         if (isMoving){ //The code inside this block only runs if isMoving is true. This variable is set to true if any movement keys are being pressed (W, A, S, D). If isMoving is false, which means no movement keys are being pressed, the code inside this block will be skipped.
-            var key = (moveX, moveY); //This line is creating a tuple that stores two integer values, moveX and moveY. moveX and moveY are integers that are set based on which movement keys are being pressed.
+            //var key = (moveX, moveY); //This line is creating a tuple that stores two integer values, moveX and moveY. moveX and moveY are integers that are set based on which movement keys are being pressed.
             if (keyToAnimationMap.TryGetValue(key, out var value)){ //Here we are trying to get a value from the keyToAnimationMap dictionary using key as the lookup key. TryGetValue is a method provided by the Dictionary class that attempts to get the value associated with the specified key. If the key is found in the dictionary, TryGetValue returns true and the value associated with the key is output in the variable value. If the key is not found in the dictionary, TryGetValue returns false and value is assigned the default value of its type.
                 PlayAnimation(value.animationType); //This line is calling the PlayAnimation method with the animationType obtained from the value tuple. This will start playing the animation corresponding to the current movement direction.
                 keyValue = value.keyValue; //This line is setting the keyValue variable to the keyValue obtained from the value tuple. keyValue represents the keys that are currently being pressed (for example, "W" for up, "A" for left, "S" for down, "D" for right, etc).
@@ -108,8 +128,15 @@ public class CharacterMovement : MonoBehaviour
             }
         }
         else{
-            PlayAnimation(AnimationType.Idle);
-            keyValue = "IDLE";
+            if (keyToAnimationMap.TryGetValue(key, out var value)){
+                PlayAnimation(value.idleAnimationType);
+                keyValue = value.keyValue; //This line is setting the keyValue variable to the keyValue obtained from the value tuple. keyValue represents the keys that are currently being pressed (for example, "W" for up, "A" for left, "S" for down, "D" for right, etc).
+                if (lastKeyValue != keyValue){ //This line checks if the previous frame's keyValue is different from the current frame's keyValue. If they are different, it means the player has changed their movement direction.
+                    lastKeyValue = keyValue; //This line is updating lastKeyValue to the current keyValue. This is done to keep track of the previous frame's movement direction, which allows us to detect when the player changes their movement direction.
+                }
+            }
+            // PlayAnimation(AnimationType.IdleDown);
+            // keyValue = "IDLE";
         }
 
         Vector3 moveDir = new Vector3(moveX, moveY).normalized;
@@ -139,6 +166,8 @@ public class CharacterMovement : MonoBehaviour
             isMoving = true;      
         } 
 
+        if (isMoving) lastMoveKey = (moveX, moveY);
+        
         HandleMovement(moveX, moveY, isMoving);
     }
 
@@ -180,9 +209,32 @@ public class CharacterMovement : MonoBehaviour
         if (animationType != activeAnimationType){
             activeAnimationType = animationType;
 
+            OnAnimationChange?.Invoke(this, new OnAnimationChangeEventArgs { AnimationType = animationType });
+
             switch (animationType){
-                case AnimationType.Idle:
-                    PlayAnimation(idleAnimationFrameArray, .11f);
+                case AnimationType.IdleUp:
+                    PlayAnimation(idleUpAnimationFrameArray, .11f);
+                    break;
+                case AnimationType.IdleLeft:
+                    PlayAnimation(idleLeftAnimationFrameArray, .11f);
+                    break;
+                case AnimationType.IdleDown:
+                    PlayAnimation(idleDownAnimationFrameArray, .11f);
+                    break;
+                case AnimationType.IdleRight:
+                    PlayAnimation(idleRightAnimationFrameArray, .11f);
+                    break;
+                case AnimationType.IdleUpLeft:
+                    PlayAnimation(idleUpLeftAnimationFrameArray, .11f);
+                    break;
+                case AnimationType.IdleLeftDown:
+                    PlayAnimation(idleLeftDownAnimationFrameArray, .11f);
+                    break;
+                case AnimationType.IdleDownRight:
+                    PlayAnimation(idleDownRightAnimationFrameArray, .11f);
+                    break;
+                case AnimationType.IdleUpRight:
+                    PlayAnimation(idleUpRightAnimationFrameArray, .11f);
                     break;
                 case AnimationType.RunUp:
                     PlayAnimation(runUpAnimationFrameArray, .1f);

@@ -10,6 +10,7 @@ public class GameHandler : MonoBehaviour
     private void Awake() {
         if(charMovement != null) {
             charMovement.OnKeyPress += MoveCharacter; //subscribe
+            charMovement.OnAnimationChange += AnimationChange;
         }
         else {
             Debug.LogError("CharacterMovement component not found on this GameObject.");
@@ -29,10 +30,15 @@ public class GameHandler : MonoBehaviour
 
         Debug.Log(key);
     }
+    private void AnimationChange(object sender, CharacterMovement.OnAnimationChangeEventArgs e){
+        Debug.Log("Animation: " + e.AnimationType);
+    }
 
     void OnDestroy()
     {
-        if(charMovement != null)
+        if(charMovement != null){
             charMovement.OnKeyPress -= MoveCharacter;
+            charMovement.OnAnimationChange -= AnimationChange; // unsubscribe to the new event
+        }
     }
 }
