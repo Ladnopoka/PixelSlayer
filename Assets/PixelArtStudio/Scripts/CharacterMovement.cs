@@ -5,14 +5,35 @@ using System;
 
 public class CharacterMovement : MonoBehaviour
 {
-    public event EventHandler OnAnimationLooped;
-    public event EventHandler OnAnimationLoopedFirst;
+    [SerializeField] private Sprite[] idleAnimationFrameArray;
+    [SerializeField] private Sprite[] runUpAnimationFrameArray;
+    [SerializeField] private Sprite[] runLeftAnimationFrameArray;
+    [SerializeField] private Sprite[] runDownAnimationFrameArray;
+    [SerializeField] private Sprite[] runRightAnimationFrameArray;
+    [SerializeField] private Sprite[] runUpLeftAnimationFrameArray;
+    [SerializeField] private Sprite[] runLeftDownAnimationFrameArray;
+    [SerializeField] private Sprite[] runDownRightAnimationFrameArray;
+    [SerializeField] private Sprite[] runUpRightAnimationFrameArray;
+
+    private enum AnimationType
+    {
+        Idle,
+        RunUp,
+        RunLeft,
+        RunDown,
+        RunRight,
+        RunUpLeft,
+        RunLeftDown,
+        RunDownRight,
+        RunUpRight
+    }
 
     //Generic version of EventHandler, pass in our specific EventArgs as in generic parameter
     public event EventHandler<OnKeyPressEventArgs> OnKeyPress;
     public class OnKeyPressEventArgs : EventArgs{
         public int keyCount;    //field
         public string keyValue;
+        AnimationType AnimationType;
     }
 
     [SerializeField] private Sprite[] spriteArray; 
@@ -26,6 +47,7 @@ public class CharacterMovement : MonoBehaviour
     private float speed = 10f;
     private int keyCount;
     private string keyValue;
+    private AnimationType activeAnimationType;
 
     private void Awake() {
         spriteRenderer = gameObject.GetComponent<SpriteRenderer>();
@@ -35,7 +57,7 @@ public class CharacterMovement : MonoBehaviour
     void Start()
     {
         Debug.Log("I have reached the Debug.Log: ");
-        // OnKeyPress += Test_OnKeyPress; // Subscribe to event
+        PlayAnimation(AnimationType.Idle);
     }
 
     // Update is called once per frame
@@ -60,36 +82,81 @@ public class CharacterMovement : MonoBehaviour
 
     private void HandleMovement()
     {
+        bool isMoving = false;
         float moveX = 0, moveY = 0;
 
         if (Input.GetKey(KeyCode.W)){
             moveY = 1;
             keyCount++;
             keyValue = "W";
-            OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyCount = keyCount }); //Invoke key press if not null
+            isMoving = true;
             OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyValue = keyValue }); //Invoke key press if not null
         }
         if (Input.GetKey(KeyCode.A)){
             moveX = -1;
             keyCount++;
             keyValue = "A";
-            OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyCount = keyCount }); //Invoke key press if not null
+            isMoving = true;
             OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyValue = keyValue }); //Invoke key press if not null
-
         }
         if (Input.GetKey(KeyCode.S)){
             moveY = -1;
             keyCount++;
             keyValue = "S";
-            OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyCount = keyCount }); //Invoke key press if not null
+            isMoving = true;
             OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyValue = keyValue }); //Invoke key press if not null
         }
         if (Input.GetKey(KeyCode.D)){
             moveX = 1;
             keyCount++;
             keyValue = "D";
-            OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyCount = keyCount }); //Invoke key press if not null
+            isMoving = true;
             OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyValue = keyValue }); //Invoke key press if not null
+        }
+        if (Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.A)){
+            keyValue = "WA";
+            isMoving = true;
+            OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyValue = keyValue }); //Invoke key press if not null
+        }
+        if (Input.GetKey(KeyCode.A) && Input.GetKey(KeyCode.S)){
+
+            keyValue = "AS";
+            isMoving = true;
+            OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyValue = keyValue }); //Invoke key press if not null
+        }
+        if (Input.GetKey(KeyCode.S) && Input.GetKey(KeyCode.D)){
+
+            keyValue = "SD";
+            isMoving = true;
+            OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyValue = keyValue }); //Invoke key press if not null
+        }
+        if (Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.D)){
+
+            keyValue = "WD";
+            isMoving = true;
+            OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyValue = keyValue }); //Invoke key press if not null
+        }
+
+        if (isMoving){
+            if (keyValue == "W")
+                PlayAnimation(AnimationType.RunUp); 
+            if (keyValue == "A")
+                PlayAnimation(AnimationType.RunLeft); 
+            if (keyValue == "S")
+                PlayAnimation(AnimationType.RunDown); 
+            if (keyValue == "D")
+                PlayAnimation(AnimationType.RunRight);
+            if (keyValue == "WA")
+                PlayAnimation(AnimationType.RunUpLeft); 
+            if (keyValue == "AS")
+                PlayAnimation(AnimationType.RunLeftDown); 
+            if (keyValue == "SD")
+                PlayAnimation(AnimationType.RunDownRight); 
+            if (keyValue == "WD")
+                PlayAnimation(AnimationType.RunUpRight);
+        }
+        else{
+            PlayAnimation(AnimationType.Idle);
         }
 
         Vector3 moveDir = new Vector3(moveX, moveY).normalized;
@@ -117,20 +184,52 @@ public class CharacterMovement : MonoBehaviour
                 spriteRenderer.sprite = spriteArray[currentFrame];
             }
 
-            if (currentFrame == 0)
-            {
-                loopCounter++;
-                if (loopCounter == 1)
-                    if (OnAnimationLoopedFirst != null) OnAnimationLoopedFirst(this, EventArgs.Empty);
+            //THIS CODE IS FOR EVENT HANDLER TO SHOW THAT A LOOP HAPPENED
+            // if (currentFrame == 0)
+            // {
+            //     loopCounter++;
+            //     if (loopCounter == 1)
+            //         if (OnAnimationLoopedFirst != null) OnAnimationLoopedFirst(this, EventArgs.Empty);
                     
-                if (OnAnimationLooped != null) OnAnimationLooped(this, EventArgs.Empty);
-            }
+            //     if (OnAnimationLooped != null) OnAnimationLooped(this, EventArgs.Empty);
+            // }
         }
     }
 
-    // private void Test_OnKeyPress(object sender, EventArgs e)
-    // {
-    //     Debug.Log("I have triggered OnKeyPress event DELETED VERSION");
-    // }
+    private void PlayAnimation(AnimationType animationType)
+    {
+        if (animationType != activeAnimationType){
+            activeAnimationType = animationType;
 
+            switch (animationType){
+                case AnimationType.Idle:
+                    PlayAnimation(idleAnimationFrameArray, .11f);
+                    break;
+                case AnimationType.RunUp:
+                    PlayAnimation(runUpAnimationFrameArray, .1f);
+                    break;
+                case AnimationType.RunLeft:
+                    PlayAnimation(runLeftAnimationFrameArray, .1f);
+                    break;
+                case AnimationType.RunDown:
+                    PlayAnimation(runDownAnimationFrameArray, .1f);
+                    break;
+                case AnimationType.RunRight:
+                    PlayAnimation(runRightAnimationFrameArray, .1f);
+                    break;
+                case AnimationType.RunUpLeft:
+                    PlayAnimation(runUpLeftAnimationFrameArray, .1f);
+                    break;
+                case AnimationType.RunLeftDown:
+                    PlayAnimation(runLeftDownAnimationFrameArray, .1f);
+                    break;
+                case AnimationType.RunDownRight:
+                    PlayAnimation(runDownRightAnimationFrameArray, .1f);
+                    break;
+                case AnimationType.RunUpRight:
+                    PlayAnimation(runUpRightAnimationFrameArray, .1f);
+                    break;
+            }
+        }
+    }
 }
