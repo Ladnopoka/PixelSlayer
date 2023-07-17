@@ -119,12 +119,28 @@ public class CharacterMovement : MonoBehaviour
         if (isMoving){ //The code inside this block only runs if isMoving is true. This variable is set to true if any movement keys are being pressed (W, A, S, D). If isMoving is false, which means no movement keys are being pressed, the code inside this block will be skipped.
             //var key = (moveX, moveY); //This line is creating a tuple that stores two integer values, moveX and moveY. moveX and moveY are integers that are set based on which movement keys are being pressed.
             if (keyToAnimationMap.TryGetValue(key, out var value)){ //Here we are trying to get a value from the keyToAnimationMap dictionary using key as the lookup key. TryGetValue is a method provided by the Dictionary class that attempts to get the value associated with the specified key. If the key is found in the dictionary, TryGetValue returns true and the value associated with the key is output in the variable value. If the key is not found in the dictionary, TryGetValue returns false and value is assigned the default value of its type.
-                PlayAnimation(value.animationType); //This line is calling the PlayAnimation method with the animationType obtained from the value tuple. This will start playing the animation corresponding to the current movement direction.
-                keyValue = value.keyValue; //This line is setting the keyValue variable to the keyValue obtained from the value tuple. keyValue represents the keys that are currently being pressed (for example, "W" for up, "A" for left, "S" for down, "D" for right, etc).
+                Vector3 moveDir = new Vector3(moveX, moveY).normalized;
+                
+                // PlayAnimation(value.animationType); //This line is calling the PlayAnimation method with the animationType obtained from the value tuple. This will start playing the animation corresponding to the current movement direction.
+                // keyValue = value.keyValue; //This line is setting the keyValue variable to the keyValue obtained from the value tuple. keyValue represents the keys that are currently being pressed (for example, "W" for up, "A" for left, "S" for down, "D" for right, etc).
                 if (lastKeyValue != keyValue){ //This line checks if the previous frame's keyValue is different from the current frame's keyValue. If they are different, it means the player has changed their movement direction.
                     lastKeyValue = keyValue; //This line is updating lastKeyValue to the current keyValue. This is done to keep track of the previous frame's movement direction, which allows us to detect when the player changes their movement direction.
                     OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyValue = keyValue }); //This line invokes the OnKeyPress event, passing a new instance of OnKeyPressEventArgs with the current keyValue to any subscribed event handlers. The ? before Invoke is a null-conditional operator, which means Invoke will only be called if OnKeyPress is not null (i.e., if there are any subscribers to the OnKeyPress event).
                 }
+
+                Vector3 targetMovePosition = transform.position + moveDir * speed * Time.deltaTime;
+                RaycastHit2D raycastHit = Physics2D.Raycast(transform.position, moveDir, speed * Time.deltaTime);
+                if (raycastHit.collider == null){
+                    //no hit
+                    transform.position = targetMovePosition;
+                    PlayAnimation(value.animationType); //This line is calling the PlayAnimation method with the animationType obtained from the value tuple. This will start playing the animation corresponding to the current movement direction.
+                    keyValue = value.keyValue; //This line is setting the keyValue variable to the keyValue obtained from the value tuple. keyValue represents the keys that are currently being pressed (for example, "W" for up, "A" for left, "S" for down, "D" for right, etc).
+                }
+                else{
+                    //hit
+                }
+
+                //transform.position += moveDir * speed * Time.deltaTime;
             }
         }
         else{
@@ -138,9 +154,6 @@ public class CharacterMovement : MonoBehaviour
             // PlayAnimation(AnimationType.IdleDown);
             // keyValue = "IDLE";
         }
-
-        Vector3 moveDir = new Vector3(moveX, moveY).normalized;
-        transform.position += moveDir * speed * Time.deltaTime;
     }
 
     // New method for handling player input
