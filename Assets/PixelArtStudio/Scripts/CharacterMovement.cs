@@ -53,6 +53,11 @@ public class CharacterMovement : MonoBehaviour
         public AnimationType AnimationType;
     }
 
+    public event EventHandler<OnCollisionEventArgs> OnCollision;
+    public class OnCollisionEventArgs : EventArgs {
+        public RaycastHit2D collisionVar;
+    }
+
     [SerializeField] private Sprite[] spriteArray; 
     private int currentFrame;
     private float timer;
@@ -138,6 +143,7 @@ public class CharacterMovement : MonoBehaviour
                 }
                 else{
                     //hit
+                    OnCollision?.Invoke(this, new OnCollisionEventArgs { collisionVar = raycastHit });
                 }
 
                 //transform.position += moveDir * speed * Time.deltaTime;
