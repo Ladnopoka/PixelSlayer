@@ -30,7 +30,7 @@ public class GameHandler : MonoBehaviour
         Debug.Log(e.keyValue);
     }
     private void AnimationChange(object sender, CharacterMovement.OnAnimationChangeEventArgs e){
-        Debug.Log("Animation: " + e.AnimationType);
+        //Debug.Log("Animation: " + e.AnimationType);
     }
     private void OnCollision(object sender, CharacterMovement.OnCollisionEventArgs e){
         Debug.Log("Collision detected with: " + e.collisionVar.collider.gameObject.name);
