@@ -169,10 +169,11 @@ public class CharacterMovement : MonoBehaviour
                         }
                         else{
                             //Cannot move vertically
+                            //raycastHit = Physics2D.Raycast(transform.position, moveDir, speed * Time.deltaTime);
                         }
                     }
  
-                    OnCollision?.Invoke(this, new OnCollisionEventArgs { collisionVar = raycastHit });
+                    //OnCollision?.Invoke(this, new OnCollisionEventArgs { collisionVar = raycastHit });
                 }
             }
         }
@@ -235,16 +236,6 @@ public class CharacterMovement : MonoBehaviour
             {
                 spriteRenderer.sprite = spriteArray[currentFrame];
             }
-
-            //THIS CODE IS FOR EVENT HANDLER TO SHOW THAT A LOOP HAPPENED
-            // if (currentFrame == 0)
-            // {
-            //     loopCounter++;
-            //     if (loopCounter == 1)
-            //         if (OnAnimationLoopedFirst != null) OnAnimationLoopedFirst(this, EventArgs.Empty);
-                    
-            //     if (OnAnimationLooped != null) OnAnimationLooped(this, EventArgs.Empty);
-            // }
         }
     }
 
