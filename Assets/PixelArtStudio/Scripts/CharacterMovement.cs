@@ -140,7 +140,7 @@ public class CharacterMovement : MonoBehaviour
                 }
                 else{
                     //Collision with objects, cannot move DIAGONALLY
-                    //Test just moving horizontal direction
+                    //Test just moving vertical direction
                     Vector3 altMoveDir = new Vector3(moveDir.x, 0f).normalized;
                     //var tupleDir = (altMoveDir.x, altMoveDir.y);
                     targetMovePosition = transform.position + altMoveDir * speed * Time.deltaTime;
@@ -168,12 +168,24 @@ public class CharacterMovement : MonoBehaviour
                             keyValue = value.keyValue;
                         }
                         else{
-                            //Cannot move vertically
-                            //raycastHit = Physics2D.Raycast(transform.position, moveDir, speed * Time.deltaTime);
+                            // Cannot move vertically
+                            // Try moving diagonally
+                            altMoveDir = new Vector3(moveDir.x, moveDir.y).normalized;
+                            raycastHit = Physics2D.Raycast(transform.position, altMoveDir, speed * Time.deltaTime);
+                            if (altMoveDir.x != 0f && altMoveDir.y != 0f && raycastHit.collider == null) {
+                                // Can move diagonally
+                                transform.position = targetMovePosition;
+                                PlayAnimation(value.animationType);
+                                keyValue = value.keyValue;
+                                //OnCollision?.Invoke(this, new OnCollisionEventArgs { collisionVar = raycastHit });
+                            } else {
+                                // Cannot move diagonally either
+                                raycastHit = Physics2D.Raycast(transform.position, moveDir, speed * Time.deltaTime);
+                                //OnCollision?.Invoke(this, new OnCollisionEventArgs { collisionVar = raycastHit });
+                            }
+                            OnCollision?.Invoke(this, new OnCollisionEventArgs { collisionVar = raycastHit });
                         }
                     }
- 
-                    //OnCollision?.Invoke(this, new OnCollisionEventArgs { collisionVar = raycastHit });
                 }
             }
         }
