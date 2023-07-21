@@ -53,6 +53,11 @@ public class CharacterMovement : MonoBehaviour
         public AnimationType AnimationType;
     }
 
+    public event EventHandler<OnCollisionEventArgs> OnCollision;
+    public class OnCollisionEventArgs : EventArgs {
+        public RaycastHit2D collisionVar;
+    }
+
     [SerializeField] private Sprite[] spriteArray; 
     private int currentFrame;
     private float timer;
@@ -117,13 +122,70 @@ public class CharacterMovement : MonoBehaviour
         var key = isMoving ? (moveX, moveY) : lastMoveKey; //This line is creating a tuple that stores two integer values, moveX and moveY. moveX and moveY are integers that are set based on which movement keys are being pressed.
         
         if (isMoving){ //The code inside this block only runs if isMoving is true. This variable is set to true if any movement keys are being pressed (W, A, S, D). If isMoving is false, which means no movement keys are being pressed, the code inside this block will be skipped.
-            //var key = (moveX, moveY); //This line is creating a tuple that stores two integer values, moveX and moveY. moveX and moveY are integers that are set based on which movement keys are being pressed.
             if (keyToAnimationMap.TryGetValue(key, out var value)){ //Here we are trying to get a value from the keyToAnimationMap dictionary using key as the lookup key. TryGetValue is a method provided by the Dictionary class that attempts to get the value associated with the specified key. If the key is found in the dictionary, TryGetValue returns true and the value associated with the key is output in the variable value. If the key is not found in the dictionary, TryGetValue returns false and value is assigned the default value of its type.
-                PlayAnimation(value.animationType); //This line is calling the PlayAnimation method with the animationType obtained from the value tuple. This will start playing the animation corresponding to the current movement direction.
-                keyValue = value.keyValue; //This line is setting the keyValue variable to the keyValue obtained from the value tuple. keyValue represents the keys that are currently being pressed (for example, "W" for up, "A" for left, "S" for down, "D" for right, etc).
+                Vector3 moveDir = new Vector3(moveX, moveY).normalized;
+                
                 if (lastKeyValue != keyValue){ //This line checks if the previous frame's keyValue is different from the current frame's keyValue. If they are different, it means the player has changed their movement direction.
                     lastKeyValue = keyValue; //This line is updating lastKeyValue to the current keyValue. This is done to keep track of the previous frame's movement direction, which allows us to detect when the player changes their movement direction.
                     OnKeyPress?.Invoke(this, new OnKeyPressEventArgs { keyValue = keyValue }); //This line invokes the OnKeyPress event, passing a new instance of OnKeyPressEventArgs with the current keyValue to any subscribed event handlers. The ? before Invoke is a null-conditional operator, which means Invoke will only be called if OnKeyPress is not null (i.e., if there are any subscribers to the OnKeyPress event).
+                }
+
+                Vector3 targetMovePosition = transform.position + moveDir * speed * Time.deltaTime;
+                RaycastHit2D raycastHit = Physics2D.Raycast(transform.position, moveDir, speed * Time.deltaTime);
+                if (raycastHit.collider == null){
+                    //No Collision with objects
+                    transform.position = targetMovePosition;
+                    PlayAnimation(value.animationType); //This line is calling the PlayAnimation method with the animationType obtained from the value tuple. This will start playing the animation corresponding to the current movement direction.
+                    keyValue = value.keyValue; //This line is setting the keyValue variable to the keyValue obtained from the value tuple. keyValue represents the keys that are currently being pressed (for example, "W" for up, "A" for left, "S" for down, "D" for right, etc).
+                }
+                else{
+                    //Collision with objects, cannot move DIAGONALLY
+                    //Test just moving horizontal direction
+                    Vector3 altMoveDir = new Vector3(moveDir.x, 0f).normalized;
+                    //var tupleDir = (altMoveDir.x, altMoveDir.y);
+                    targetMovePosition = transform.position + altMoveDir * speed * Time.deltaTime;
+                    raycastHit = Physics2D.Raycast(transform.position, altMoveDir, speed * Time.deltaTime);
+
+                    if (altMoveDir.x != 0f && raycastHit.collider == null){
+                        //Can move horizontally
+
+                        transform.position = targetMovePosition;
+                        PlayAnimation(value.animationType); 
+                        keyValue = value.keyValue;
+                    }
+                    else{
+                        //Cannot move horizontally
+                        //Test just moving horizontal direction
+                        altMoveDir = new Vector3(0f, moveDir.y).normalized;
+                        //tupleDir = (altMoveDir.x, altMoveDir.y);
+                        targetMovePosition = transform.position + altMoveDir * speed * Time.deltaTime;
+                        raycastHit = Physics2D.Raycast(transform.position, altMoveDir, speed * Time.deltaTime);
+                        if (altMoveDir.y != 0f && raycastHit.collider == null){
+                            //Can move Horizontally
+
+                            transform.position = targetMovePosition;
+                            PlayAnimation(value.animationType);
+                            keyValue = value.keyValue;
+                        }
+                        else{
+                            // Cannot move vertically
+                            // Try moving diagonally
+                            altMoveDir = new Vector3(moveDir.x, moveDir.y).normalized;
+                            raycastHit = Physics2D.Raycast(transform.position, altMoveDir, speed * Time.deltaTime);
+                            if (altMoveDir.x != 0f && altMoveDir.y != 0f && raycastHit.collider == null) {
+                                // Can move diagonally
+                                transform.position = targetMovePosition;
+                                PlayAnimation(value.animationType);
+                                keyValue = value.keyValue;
+                                //OnCollision?.Invoke(this, new OnCollisionEventArgs { collisionVar = raycastHit });
+                            } else {
+                                // Cannot move diagonally either
+                                raycastHit = Physics2D.Raycast(transform.position, moveDir, speed * Time.deltaTime);
+                                OnCollision?.Invoke(this, new OnCollisionEventArgs { collisionVar = raycastHit });
+                            }
+                            //OnCollision?.Invoke(this, new OnCollisionEventArgs { collisionVar = raycastHit });
+                        }
+                    }
                 }
             }
         }
@@ -135,12 +197,7 @@ public class CharacterMovement : MonoBehaviour
                     lastKeyValue = keyValue; //This line is updating lastKeyValue to the current keyValue. This is done to keep track of the previous frame's movement direction, which allows us to detect when the player changes their movement direction.
                 }
             }
-            // PlayAnimation(AnimationType.IdleDown);
-            // keyValue = "IDLE";
         }
-
-        Vector3 moveDir = new Vector3(moveX, moveY).normalized;
-        transform.position += moveDir * speed * Time.deltaTime;
     }
 
     // New method for handling player input
@@ -191,16 +248,6 @@ public class CharacterMovement : MonoBehaviour
             {
                 spriteRenderer.sprite = spriteArray[currentFrame];
             }
-
-            //THIS CODE IS FOR EVENT HANDLER TO SHOW THAT A LOOP HAPPENED
-            // if (currentFrame == 0)
-            // {
-            //     loopCounter++;
-            //     if (loopCounter == 1)
-            //         if (OnAnimationLoopedFirst != null) OnAnimationLoopedFirst(this, EventArgs.Empty);
-                    
-            //     if (OnAnimationLooped != null) OnAnimationLooped(this, EventArgs.Empty);
-            // }
         }
     }
 
@@ -264,3 +311,14 @@ public class CharacterMovement : MonoBehaviour
         }
     }
 }
+
+/*
+Here's an example of how the movement and speed and collision of character is calculated:
+
+Let's say your game object is at position (1, 2, 3), you want it to move to the right at a speed of 4 units per second, and the last frame took 0.5 seconds to complete.
+Then, transform.position will be (1, 2, 3), moveDir will be (1, 0, 0) (to the right), speed will be 4, and Time.deltaTime will be 0.5.
+First, moveDir * speed * Time.deltaTime gives (1, 0, 0) * 4 * 0.5 = (2, 0, 0). This means you want to move the game object 2 units to the right in the current frame.
+Then, transform.position + moveDir * speed * Time.deltaTime gives (1, 2, 3) + (2, 0, 0) = (3, 2, 3). This is the target position for the game object in the current frame.
+Next, Physics2D.Raycast(transform.position, moveDir, speed * Time.deltaTime) will shoot a ray from (1, 2, 3) to the right, and the maximum distance of the ray will be 2.
+If there's an object at position (2, 2, 3), the ray will hit this object and raycastHit.collider will not be null. The raycastHit object will contain information about this collision. If there's no object within 2 units to the right, raycastHit.collider will be null, and the game object will move to the target position (3, 2, 3).
+*/
