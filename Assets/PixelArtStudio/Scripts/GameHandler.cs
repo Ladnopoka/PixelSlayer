@@ -6,6 +6,7 @@ using System;
 public class GameHandler : MonoBehaviour
 {
     [SerializeField] CharacterMovement charMovement;
+    public CameraMovement cameraMovement;
 
     private void Awake() {
         if(charMovement != null) {
@@ -19,7 +20,7 @@ public class GameHandler : MonoBehaviour
     }
 
     private void Start() {
-
+        cameraMovement.Setup(() => charMovement.transform.position);
     }
 
     private void Update() {
@@ -28,6 +29,7 @@ public class GameHandler : MonoBehaviour
     
     private void MoveCharacter(object sender, CharacterMovement.OnKeyPressEventArgs e){
         Debug.Log(e.keyValue);
+        cameraMovement.Setup(() => charMovement.transform.position);
     }
     private void AnimationChange(object sender, CharacterMovement.OnAnimationChangeEventArgs e){
         //Debug.Log("Animation: " + e.AnimationType);
