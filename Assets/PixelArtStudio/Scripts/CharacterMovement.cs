@@ -311,3 +311,14 @@ public class CharacterMovement : MonoBehaviour
         }
     }
 }
+
+/*
+Here's an example of how the movement and speed and collision of character is calculated:
+
+Let's say your game object is at position (1, 2, 3), you want it to move to the right at a speed of 4 units per second, and the last frame took 0.5 seconds to complete.
+Then, transform.position will be (1, 2, 3), moveDir will be (1, 0, 0) (to the right), speed will be 4, and Time.deltaTime will be 0.5.
+First, moveDir * speed * Time.deltaTime gives (1, 0, 0) * 4 * 0.5 = (2, 0, 0). This means you want to move the game object 2 units to the right in the current frame.
+Then, transform.position + moveDir * speed * Time.deltaTime gives (1, 2, 3) + (2, 0, 0) = (3, 2, 3). This is the target position for the game object in the current frame.
+Next, Physics2D.Raycast(transform.position, moveDir, speed * Time.deltaTime) will shoot a ray from (1, 2, 3) to the right, and the maximum distance of the ray will be 2.
+If there's an object at position (2, 2, 3), the ray will hit this object and raycastHit.collider will not be null. The raycastHit object will contain information about this collision. If there's no object within 2 units to the right, raycastHit.collider will be null, and the game object will move to the target position (3, 2, 3).
+*/
