@@ -4,15 +4,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
-/*public class TargetDummy : MonoBehaviour{
-    //[SerializeField] private Sprite[] idleLeftDownAnimationFrameArray;
-    CharacterMovement characterMovement;
-
-    void Start() {
-        characterMovement.PlayAnimation(characterMovement., .11f);
-    }
-}*/
-
 public class TargetDummy : MonoBehaviour{
 
     [SerializeField] private Sprite[] frameArray;
