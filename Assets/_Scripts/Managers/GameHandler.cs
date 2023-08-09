@@ -4,12 +4,14 @@ public class GameHandler : MonoBehaviour
 {
     [SerializeField] CharacterMovement charMovement;
     public CameraMovement cameraMovement;
+    private CharacterAttack charAttack;
 
     private void Awake() {
         if(charMovement != null) {
             charMovement.OnKeyPress += MoveCharacter; //subscribe
             charMovement.OnAnimationChange += AnimationChange;
             charMovement.OnCollision += OnCollision;
+            charMovement.OnMousePress += MousePress; //subscribe
         }
         else {
             Debug.LogError("CharacterMovement component not found on this GameObject.");
@@ -24,6 +26,10 @@ public class GameHandler : MonoBehaviour
 
     }
 
+    private void MousePress(object sender, CharacterMovement.OnMousePressEventArgs e){
+        Debug.Log("We have reached the CharacterAttack event WITH MOUSECLICK!!! " + e.mousePress);
+        //charMovement.PlayAnimation(charMovement.attackArray, .1f);
+    }
     private void MoveCharacter(object sender, CharacterMovement.OnKeyPressEventArgs e){
         Debug.Log(e.keyValue);
         cameraMovement.Setup(() => charMovement.transform.position);
