@@ -6,25 +6,47 @@ using UnityEngine.UIElements;
 
 public class CharacterController : MonoBehaviour
 {
-    // Making the State enum public
     public enum State
     {
         Idle,
         Attacking,
     }
 
-    // Private variable to hold the state
     private State currentState;
 
-    // Public property to access and optionally set the state
     public State CurrentState 
     {
         get { return currentState; }
-        set { currentState = value; } // This setter allows other classes to change the state. If you don't want that, just remove this setter.
+        private set 
+        {
+            currentState = value;
+
+            // Notify observers if the state changes to attacking
+            if (currentState == State.Attacking)
+            {
+                OnCharacterAttack?.Invoke(this, EventArgs.Empty);
+            }
+        }
     }
+
+    // Define the event for other classes to subscribe to
+    public event EventHandler OnCharacterAttack;
 
     private void Awake()
     {
         currentState = State.Idle;
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            Attack();
+        }
+    }
+
+    public void Attack()
+    {
+        CurrentState = State.Attacking;
     }
 }
