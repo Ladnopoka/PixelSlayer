@@ -1,4 +1,4 @@
-using System;
+/*using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -58,7 +58,7 @@ public class CharacterAnimationData
                 throw new ArgumentOutOfRangeException(nameof(actionType), actionType, null);
         }
     }
-}
+}*/
 
 
 
@@ -120,3 +120,6 @@ public class CharacterAnimationData
         // ... Initialize others as needed
     }
 }*/
+
+
+

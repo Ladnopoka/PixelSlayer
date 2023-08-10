@@ -4,17 +4,18 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-using System;
-using UnityEngine;
-
 public class CharacterAnimation : MonoBehaviour
 {
-    public CharacterAnimationData animationData;
+    public CharacterAnimationData animationSprites;
     private AnimationType activeAnimationType;
     private Sprite[] spriteArray;
     private float frameRate = .11f;
     private int currentFrame;
     private float timer;
+    private bool isAnimating;
+    private bool loop = true;
+    
+    
     
     public enum AnimationType
     {
@@ -43,6 +44,21 @@ public class CharacterAnimation : MonoBehaviour
         AttackDownRight,
         AttackUpRight
     }
+    
+    private Sprite[] GetIdleUpSprites()
+    {
+        return animationSprites.GetAnimation(CharacterAnimationData.Direction.Up, CharacterAnimationData.ActionType.Idle);
+    }
+
+    private Sprite[] GetRunUpSprites()
+    {
+        return animationSprites.GetAnimation(CharacterAnimationData.Direction.Up, CharacterAnimationData.ActionType.Run);
+    }
+
+    private Sprite[] GetAttackUpSprites()
+    {
+        return animationSprites.GetAnimation(CharacterAnimationData.Direction.Up, CharacterAnimationData.ActionType.Attack);
+    }
 
     public event EventHandler<OnAnimationChangeEventArgs> OnAnimationChange;
     
@@ -60,24 +76,46 @@ public class CharacterAnimation : MonoBehaviour
 
     public void SetAnimationData(CharacterAnimationData data)
     {
-        animationData = data;
+        animationSprites = data;
     }
 
-    private Sprite[] GetIdleUpSprites()
-    {
-        return animationData.GetAnimation(CharacterAnimationData.Direction.Up, CharacterAnimationData.ActionType.Idle);
-    }
+    // private Sprite[] GetIdleUpSprites()
+    // {
+    //     return animationSprites.GetAnimation(CharacterAnimationData.Direction.Up, CharacterAnimationData.ActionType.Idle);
+    // }
 
     // ... Other methods to get sprites for other animations
     
     
     
     
+    private void HandleAnimation()
+    {
+        if (!isAnimating || spriteArray == null || spriteArray.Length == 0)
+            return;
     
+        timer += Time.deltaTime;
+
+        //Character Sprite animations
+        if (timer >= frameRate)
+        {
+            timer -= frameRate;
+            currentFrame = (currentFrame + 1) % spriteArray.Length;
+            if (!loop && currentFrame == 0)
+            {
+                StopAnimating();
+            }
+            else
+            {
+                spriteRenderer.sprite = spriteArray[currentFrame];
+            }
+        }
+    }
     private void PlayAnimation(Sprite[] animationSprites, float frameRate)
     {
+        Debug.Log("AnimationSprites number: " + animationSprites.Length);
         // Actual logic to play the animation with the provided sprites and duration
-        this.spriteArray = spriteArray;
+        this.spriteArray = animationSprites;
         this.frameRate = frameRate;
         currentFrame = 0;
         timer = 0;
@@ -96,9 +134,19 @@ public class CharacterAnimation : MonoBehaviour
                 case AnimationType.IdleUp:
                     PlayAnimation(GetIdleUpSprites(), .11f);
                     break;
+                case AnimationType.RunUp:
+                    PlayAnimation(GetRunUpSprites(), .11f);
+                    break;
+                case AnimationType.AttackUp:
+                    PlayAnimation(GetAttackUpSprites(), .11f);
+                    break;
                 //... Other cases for other animation types
             }
         }
+    }  
+    
+    private void StopAnimating(){
+        isAnimating = false;
     }
     
     public void TriggerAttack()
@@ -109,7 +157,13 @@ public class CharacterAnimation : MonoBehaviour
     private void PlayAttackAnimation()
     {
         Debug.Log("Playing Attack Animation Lulz");
-        PlayAnimation(AnimationType.RunDown);
+        Debug.Log("AnimationType: " + AnimationType.AttackUp);
+        PlayAnimation(AnimationType.AttackUp);
+    }
+
+    private void Update()
+    {
+        HandleAnimation();
     }
 }
 

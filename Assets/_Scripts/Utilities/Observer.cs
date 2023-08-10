@@ -23,7 +23,7 @@ public class Observer : MonoBehaviour
     {
         if (_characterController == null)
         {
-            Debug.LogError("CharacterController not found on GameObject: " + gameObject.name);
+            Debug.LogError("CharacteArController not found on GameObject: " + gameObject.name);
             return;
         }
         
