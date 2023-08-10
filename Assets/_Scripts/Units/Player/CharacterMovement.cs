@@ -95,6 +95,8 @@ public class CharacterMovement : MonoBehaviour
     private (float, float) lastMoveKey;
 
     private CharacterAttack _characterAttack;
+    private CharacterController _characterController;
+    //private UsefulFunctions _usefulFunctions;
 
     private void Awake() {
         spriteRenderer = gameObject.GetComponent<SpriteRenderer>();
@@ -253,34 +255,39 @@ public class CharacterMovement : MonoBehaviour
     // New method for handling player input
     private void HandlePlayerInput()
     {
-        float moveX = 0, moveY = 0;
-        bool isMoving = false;
+ 
+            float moveX = 0, moveY = 0;
+            bool isMoving = false;
 
-        if (Input.GetKey(KeyCode.W)){
-            moveY = 1;
-            isMoving = true;
-        }
-        if (Input.GetKey(KeyCode.A)){
-            moveX = -1;
-            isMoving = true;      
-        }
-        if (Input.GetKey(KeyCode.S)){
-            moveY = -1;
-            isMoving = true;
-        }
-        if (Input.GetKey(KeyCode.D)){
-            moveX = 1;
-            isMoving = true;      
-        }
-        if (Input.GetKey(KeyCode.Mouse0))
-        {
-            //HandleAttack(moveX, moveY);
-            PlayAnimation(attackDownArray, .1f);
-        }
+            if (Input.GetKey(KeyCode.W)){
+                moveY = 1;
+                isMoving = true;
+            }
+            if (Input.GetKey(KeyCode.A)){
+                moveX = -1;
+                isMoving = true;      
+            }
+            if (Input.GetKey(KeyCode.S)){
+                moveY = -1;
+                isMoving = true;
+            }
+            if (Input.GetKey(KeyCode.D)){
+                moveX = 1;
+                isMoving = true;      
+            }
+            if (Input.GetMouseButtonDown(0))
+            {
+                //HandleAttack(moveX, moveY);
+                Vector3 mousePosition = UsefulFunctions.GetMouseWorldPosition();
+                Vector3 attackDirection = (mousePosition - transform.position).normalized;
+                Debug.Log("GetMouseWorldPosition(): " + UsefulFunctions.GetMouseWorldPosition());
+                Debug.Log("AttackDirection: " + attackDirection);
+                PlayAnimation(attackDownArray, .1f);
+            }
 
-        if (isMoving) lastMoveKey = (moveX, moveY);
+            if (isMoving) lastMoveKey = (moveX, moveY);
 
-        HandleMovement(moveX, moveY, isMoving);
+            HandleMovement(moveX, moveY, isMoving);
     }
 
     private void HandleAnimation()
