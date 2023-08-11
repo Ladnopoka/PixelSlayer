@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a374558c0e854e2eb2b581cd749a2ab8, type: 3}
-  m_Name: CharacterAnimationData
+  m_Script: {fileID: 11500000, guid: 2211e8cbe6514d92894e9238e62d7fa8, type: 3}
+  m_Name: ScriptableObjectAsset
   m_EditorClassIdentifier: 
-  animationEntryList: []
+  idle: []

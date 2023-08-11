@@ -6,50 +6,39 @@ using UnityEngine.UIElements;
 
 public class Observer : MonoBehaviour
 {
-    public CharacterController _characterController;
+    public Attack _attack;
     private CharacterMovement _characterMovement;
-    public CharacterAnimation _characterAnimation;
+    private MyScriptableAnimation _characterAnimation;
+    public MyScriptableObject _myScriptableObject;
     
     private void Awake()
     {
-        _characterAnimation = GetComponent<CharacterAnimation>();
-        if (_characterAnimation == null)
-        {
-            Debug.LogError("CharacterAnimation not found during Awake on GameObject: " + gameObject.name);
-        }
+
     }
 
     private void Start()
     {
-        if (_characterController == null)
+        if (_attack == null)
         {
-            Debug.LogError("CharacteArController not found on GameObject: " + gameObject.name);
+            Debug.LogError("CharacterController not found on GameObject: " + gameObject.name);
             return;
         }
         
         // Subscribe to the attack event
-        _characterController.OnCharacterAttack += HandleCharacterAttack;
+        _attack.OnCharacterAttack += HandleCharacterAttack;
     }
     
     private void OnDestroy()
     {
-        if (_characterController != null)
+        if (_attack != null)
         {    // Unsubscribe when this object is destroyed to prevent memory leaks
-            _characterController.OnCharacterAttack -= HandleCharacterAttack;
+            _attack.OnCharacterAttack -= HandleCharacterAttack;
         }
     }
 
     private void HandleCharacterAttack(object sender, EventArgs e)
     {
-        Debug.Log("The character attacked!");
-
-        if (_characterAnimation != null)
-        {
-            _characterAnimation.TriggerAttack();
-        }
-        else
-        {
-            Debug.LogError("_characterAnimation is null.");
-        }
+        Debug.Log("Obeserver is working with attack class!!!");
+        //_characterAnimation.PlayAnimation(_myScriptableObject.GetAnimation(), .11f);
     }
 }
