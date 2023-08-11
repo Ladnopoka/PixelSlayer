@@ -15,8 +15,6 @@ public class CharacterAnimation : MonoBehaviour
     private bool isAnimating;
     private bool loop = true;
     
-    
-    
     public enum AnimationType
     {
         IdleUp,
@@ -113,13 +111,25 @@ public class CharacterAnimation : MonoBehaviour
     }
     private void PlayAnimation(Sprite[] animationSprites, float frameRate)
     {
+        Debug.Log("I am in PlayAnimation()");
         Debug.Log("AnimationSprites number: " + animationSprites.Length);
         // Actual logic to play the animation with the provided sprites and duration
         this.spriteArray = animationSprites;
         this.frameRate = frameRate;
         currentFrame = 0;
         timer = 0;
-        spriteRenderer.sprite = spriteArray[currentFrame];
+        
+        
+        Debug.Log("spriteArray Length: " + spriteArray.Length);
+        Debug.Log("currentFrame: " + currentFrame);
+        if (spriteArray != null && currentFrame >= 0 && currentFrame < spriteArray.Length)
+        {
+            spriteRenderer.sprite = spriteArray[currentFrame];
+        }
+        else
+        {
+            Debug.LogError("Invalid currentFrame or spriteArray!");
+        }
     }
     
     private void PlayAnimation(AnimationType animationType)
@@ -156,8 +166,6 @@ public class CharacterAnimation : MonoBehaviour
 
     private void PlayAttackAnimation()
     {
-        Debug.Log("Playing Attack Animation Lulz");
-        Debug.Log("AnimationType: " + AnimationType.AttackUp);
         PlayAnimation(AnimationType.AttackUp);
     }
 

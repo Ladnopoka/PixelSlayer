@@ -5,6 +5,23 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Character Animation Data")]
 public class CharacterAnimationData : ScriptableObject
 {
+    
+    private void OnEnable()
+    {
+        Debug.Log("CharacterAnimationData OnEnable called.");
+        animationEntries = new Dictionary<Direction, AnimationSet>();
+
+        foreach (var entry in animationEntryList)
+        {
+            animationEntries[entry.direction] = entry.animationSet;
+
+            // Add debugging here:
+            if (entry.direction == Direction.Up)
+            {
+                Debug.Log("OnEnable - Up Direction Attack Sprites Count: " + entry.animationSet.Attack.Length);
+            }
+        }
+    }
 
     public enum Direction
     {
@@ -40,22 +57,14 @@ public class CharacterAnimationData : ScriptableObject
         public AnimationSet animationSet;
     }
 
-    public Dictionary<Direction, AnimationSet> animationEntries = new Dictionary<Direction, AnimationSet>();
+    [SerializeField]
+    private List<AnimationEntry> animationEntryList = new List<AnimationEntry>();
 
-    public CharacterAnimationData()
-    {
-        foreach (Direction direction in Enum.GetValues(typeof(Direction)))
-        {
-            animationEntries[direction] = new AnimationSet();
-        }
-    }
+    public Dictionary<Direction, AnimationSet> animationEntries = new Dictionary<Direction, AnimationSet>();
 
     public Sprite[] GetAnimation(Direction direction, ActionType actionType)
     {
-        Debug.Log("I have reached the GetAnimation method in Data!!!");
-        Debug.Log("Direction: " + direction);
-        Debug.Log("Action Type: " + actionType);
-        Debug.Log("Action Type IDLE: " + animationEntries[direction].Idle);
+        Debug.Log("Returned sprite array length for direction " + direction + " and action " + actionType + ": " + animationEntries[direction].Attack.Length);
         switch (actionType)
         {
             case ActionType.Idle:
