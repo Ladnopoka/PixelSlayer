@@ -9,7 +9,6 @@ public class GameHandler : MonoBehaviour
     private void Awake() {
         if(charMovement != null) {
             charMovement.OnKeyPress += MoveCharacter; //subscribe
-            charMovement.OnAnimationChange += AnimationChange;
             charMovement.OnCollision += OnCollision;
             charMovement.OnMousePress += MousePress; //subscribe
         }
@@ -34,9 +33,6 @@ public class GameHandler : MonoBehaviour
         Debug.Log(e.keyValue);
         cameraMovement.Setup(() => charMovement.transform.position);
     }
-    private void AnimationChange(object sender, CharacterMovement.OnAnimationChangeEventArgs e){
-        //Debug.Log("Animation: " + e.AnimationType);
-    }
     private void OnCollision(object sender, CharacterMovement.OnCollisionEventArgs e){
         Debug.Log("Collision detected with: " + e.collisionVar.collider.gameObject.name);
         Debug.Log("And it happened at : " + e.collisionVar.point);
@@ -46,7 +42,6 @@ public class GameHandler : MonoBehaviour
     {
         if(charMovement != null){
             charMovement.OnKeyPress -= MoveCharacter;
-            charMovement.OnAnimationChange -= AnimationChange; // unsubscribe to the new event
         }
     }
 }

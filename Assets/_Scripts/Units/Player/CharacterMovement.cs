@@ -6,7 +6,7 @@ using UnityEngine.UIElements;
 
 public class CharacterMovement : MonoBehaviour
 {
-    [SerializeField] private Sprite[] idleUpAnimationFrameArray;
+    /*[SerializeField] private Sprite[] idleUpAnimationFrameArray;
     [SerializeField] private Sprite[] idleLeftAnimationFrameArray;
     [SerializeField] private Sprite[] idleDownAnimationFrameArray;
     [SerializeField] private Sprite[] idleRightAnimationFrameArray;
@@ -57,7 +57,9 @@ public class CharacterMovement : MonoBehaviour
         AttackLeftDown,
         AttackDownRight,
         AttackUpRight
-    }
+    }*/
+
+    public MyScriptableObject animationSprites;
 
     //Generic version of EventHandler, pass in our specific EventArgs as in generic parameter
     public event EventHandler<OnKeyPressEventArgs> OnKeyPress;
@@ -68,11 +70,6 @@ public class CharacterMovement : MonoBehaviour
     public event EventHandler<OnMousePressEventArgs> OnMousePress;
     public class OnMousePressEventArgs : EventArgs{
         public bool mousePress;
-    }
-
-    public event EventHandler<OnAnimationChangeEventArgs> OnAnimationChange;
-    public class OnAnimationChangeEventArgs : EventArgs {
-        public AnimationType AnimationType;
     }
 
     public event EventHandler<OnCollisionEventArgs> OnCollision;
@@ -91,8 +88,8 @@ public class CharacterMovement : MonoBehaviour
     private int keyCount;
     private string keyValue;
     private string lastKeyValue;
-    private AnimationType activeAnimationType;
     private (float, float) lastMoveKey;
+    private Sprite[] currentAnimation;
 
     private CharacterAttack _characterAttack;
     private UnityEngine.CharacterController _characterController;
@@ -106,7 +103,9 @@ public class CharacterMovement : MonoBehaviour
     void Start()
     {
         Debug.Log("I have reached the Debug.Log: ");
-        PlayAnimation(AnimationType.IdleDown);
+        //PlayAnimation(animationSprites.Direction.Down, animationSprites.ActionType.Attack);
+        currentAnimation = animationSprites.GetAnimation(MyScriptableObject.Direction.Down, MyScriptableObject.ActionType.Idle);
+        PlayAnimation(currentAnimation, .1f);
     }
 
     // Update is called once per frame
@@ -129,47 +128,9 @@ public class CharacterMovement : MonoBehaviour
         spriteRenderer.sprite = spriteArray[currentFrame];
     }
 
-    // Dictionary for mapping key combinations to animation types and keyValues
-    private Dictionary<(float moveX, float moveY), (AnimationType animationType, AnimationType idleAnimationType, string keyValue)> keyToAnimationMap = new Dictionary<(float, float), (AnimationType, AnimationType, string)>
-    {
-        {(0, 1), (AnimationType.RunUp, AnimationType.IdleUp, "W")},
-        {(-1, 0), (AnimationType.RunLeft, AnimationType.IdleLeft, "A")},
-        {(0, -1), (AnimationType.RunDown, AnimationType.IdleDown, "S")},
-        {(1, 0), (AnimationType.RunRight, AnimationType.IdleRight, "D")},
-        {(-1, 1), (AnimationType.RunUpLeft, AnimationType.IdleUpLeft, "WA")},
-        {(-1, -1), (AnimationType.RunLeftDown, AnimationType.IdleLeftDown, "AS")},
-        {(1, -1), (AnimationType.RunDownRight, AnimationType.IdleDownRight, "SD")},
-        {(1, 1), (AnimationType.RunUpRight, AnimationType.IdleUpRight, "WD")}
-    };
-    
-    // Dictionary for mapping key combinations to animation types and keyValues
-    private Dictionary<(float moveX, float moveY), (AnimationType animationType, string keyValue)> keyToAttackMap = new Dictionary<(float, float), (AnimationType, string)>
-    {
-        {(0, 1), (AnimationType.AttackUp, "W")},
-        {(-1, 0), (AnimationType.AttackLeft, "A")},
-        {(0, -1), (AnimationType.AttackDown, "S")},
-        {(1, 0), (AnimationType.AttackRight, "D")},
-        {(-1, 1), (AnimationType.AttackUpLeft, "WA")},
-        {(-1, -1), (AnimationType.AttackLeftDown, "AS")},
-        {(1, -1), (AnimationType.AttackDownRight, "SD")},
-        {(1, 1), (AnimationType.AttackUpRight, "WD")}
-    };
-
-    private void HandleAttack(float moveX, float moveY)
-    {
-        var key = (moveX, moveY);
-
-        if (keyToAttackMap.TryGetValue(key, out var value))
-        {
-            Debug.Log("What is my key on mouse click?: " + value);
-            Debug.Log("Value.animationType = " + value.animationType);
-        }
-
-        PlayAnimation(value.animationType);
-        Debug.Log("Clicking on " + value.animationType);
-    }
-
-    private void HandleMovement(float moveX, float moveY, bool isMoving)
+    /*THE WHOLE MOVING SYSTEM IS IN MAINTENANCES MODE, WORKING ON SCRIPTABLE OBJECTS ANIMATION
+     
+     private void HandleMovement(float moveX, float moveY, bool isMoving)
     {
         var key = isMoving ? (moveX, moveY) : lastMoveKey; //This line is creating a tuple that stores two integer values, moveX and moveY. moveX and moveY are integers that are set based on which movement keys are being pressed.
     
@@ -250,7 +211,7 @@ public class CharacterMovement : MonoBehaviour
                 }
             }
         }
-    }
+    }*/
 
     // New method for handling player input
     private void HandlePlayerInput()
@@ -274,22 +235,15 @@ public class CharacterMovement : MonoBehaviour
             moveX = 1;
             isMoving = true;      
         }
-        /*if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0))
         {
-            //HandleAttack(moveX, moveY);
-            
-            // Vector3 mousePosition = UsefulFunctions.GetMouseWorldPosition();
-            // Vector3 attackDirection = (mousePosition - transform.position).normalized;
-            // Debug.Log("GetMouseWorldPosition(): " + UsefulFunctions.GetMouseWorldPosition());
-            // Debug.Log("AttackDirection: " + attackDirection);
-            
-            _characterController.Attack();
-            PlayAnimation(attackDownArray, .1f);
-        }*/
+            currentAnimation = animationSprites.GetAnimation(MyScriptableObject.Direction.Down, MyScriptableObject.ActionType.Attack);
+            PlayAnimation(currentAnimation, .1f);
+        }
 
         if (isMoving) lastMoveKey = (moveX, moveY);
 
-        HandleMovement(moveX, moveY, isMoving);
+        //HandleMovement(moveX, moveY, isMoving);
     }
 
     private void HandleAnimation()
@@ -315,7 +269,7 @@ public class CharacterMovement : MonoBehaviour
         }
     }
 
-    private void PlayAnimation(AnimationType animationType)
+    /*private void PlayAnimation(AnimationType animationType)
     {
         if (animationType != activeAnimationType){
             activeAnimationType = animationType;
@@ -396,8 +350,7 @@ public class CharacterMovement : MonoBehaviour
                     PlayAnimation(attackUpRightArray, .1f);
                     break;
             }
-        }
-    }
+        }*/ 
 }
 
 /*
