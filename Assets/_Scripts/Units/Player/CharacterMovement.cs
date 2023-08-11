@@ -5,6 +5,7 @@ using UnityEngine.UIElements;
 
 public class CharacterMovement : MonoBehaviour
 {
+    [SerializeField] private SkeletonScriptableObject _skeletonScriptableObject;
     [SerializeField] private Sprite[] idleUpAnimationFrameArray;
     [SerializeField] private Sprite[] idleLeftAnimationFrameArray;
     [SerializeField] private Sprite[] idleDownAnimationFrameArray;
@@ -220,6 +221,9 @@ public class CharacterMovement : MonoBehaviour
         if (Input.GetKey(KeyCode.D)){
             moveX = 1;
             isMoving = true;      
+        }         
+        if (Input.GetKey(KeyCode.Space)){
+            PlayAnimation(_skeletonScriptableObject.spriteArray, 0.11f);    
         } 
 
         if (isMoving) lastMoveKey = (moveX, moveY);
