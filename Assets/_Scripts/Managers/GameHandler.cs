@@ -30,7 +30,7 @@ public class GameHandler : MonoBehaviour
         //charMovement.PlayAnimation(charMovement.attackArray, .1f);
     }
     private void MoveCharacter(object sender, CharacterMovement.OnKeyPressEventArgs e){
-        Debug.Log(e.keyValue);
+        //Debug.Log(e.keyValue);
         cameraMovement.Setup(() => charMovement.transform.position);
     }
     private void OnCollision(object sender, CharacterMovement.OnCollisionEventArgs e){
