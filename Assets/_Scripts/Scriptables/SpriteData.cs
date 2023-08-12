@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "Character Animation Data NEW")]
-public class MyScriptableObject : ScriptableObject
+public class SpriteData : ScriptableObject
 {
     public enum Direction
     {

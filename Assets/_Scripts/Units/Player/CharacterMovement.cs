@@ -2,11 +2,18 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Diagnostics;
 using UnityEngine.UIElements;
 
 public class CharacterMovement : MonoBehaviour
 {
-    public MyScriptableObject animationSprites;
+    public SpriteData spriteData;
+
+    private enum State
+    {
+        Idle,
+        Attacking
+    }
 
     //Generic version of EventHandler, pass in our specific EventArgs as in generic parameter
     public event EventHandler<OnKeyPressEventArgs> OnKeyPress;
@@ -16,12 +23,12 @@ public class CharacterMovement : MonoBehaviour
         public string keyValue;
     }
 
-    public event EventHandler<OnMousePressEventArgs> OnMousePress;
-
-    public class OnMousePressEventArgs : EventArgs
-    {
-        public bool mousePress;
-    }
+    // public event EventHandler<OnMousePressEventArgs> OnMousePress;
+    //
+    // public class OnMousePressEventArgs : EventArgs
+    // {
+    //     public bool mousePress;
+    // }
 
     public event EventHandler<OnCollisionEventArgs> OnCollision;
 
@@ -29,6 +36,8 @@ public class CharacterMovement : MonoBehaviour
     {
         public RaycastHit2D collisionVar;
     }
+    
+    public event EventHandler OnCharacterAttack;
 
     private Sprite[] spriteArray;
     private int currentFrame;
@@ -43,13 +52,15 @@ public class CharacterMovement : MonoBehaviour
     private string lastKeyValue;
     private (float, float) lastMoveKey;
     private Sprite[] currentAnimation;
+    private State state;
+    private Action animationEndCallback;
 
-    private MyScriptableObject.Direction currentDirection;
-    private MyScriptableObject.ActionType currentActionType;
-    private MyScriptableObject.DirectionAnimation currentDirectionalAnimation;
+    private SpriteData.Direction currentDirection;
+    private SpriteData.ActionType currentActionType;
+    private SpriteData.DirectionAnimation currentDirectionalAnimation;
 
-
-    private CharacterAttack _characterAttack;
+    private Attack attack;
+    private SpriteData.Direction direction;
 
     private UnityEngine.CharacterController _characterController;
     //private UsefulFunctions _usefulFunctions;
@@ -57,12 +68,13 @@ public class CharacterMovement : MonoBehaviour
     private void Awake()
     {
         spriteRenderer = gameObject.GetComponent<SpriteRenderer>();
+        state = State.Idle;
     }
 
     // Start is called before the first frame update
     void Start()
     {
-        currentAnimation = animationSprites.GetAnimation(MyScriptableObject.Direction.Down, MyScriptableObject.ActionType.Idle);
+        currentAnimation = spriteData.GetAnimation(SpriteData.Direction.Down, SpriteData.ActionType.Idle);
         PlayAnimation(currentAnimation, .1f);
     }
 
@@ -78,45 +90,22 @@ public class CharacterMovement : MonoBehaviour
         isAnimating = false;
     }
 
-    public void PlayAnimation(Sprite[] spriteArray, float frameRate)
-    {
-        this.spriteArray = spriteArray;
-        this.frameRate = frameRate;
-        currentFrame = 0;
-        timer = 0;
-        spriteRenderer.sprite = spriteArray[currentFrame];
-    }
-    
-    private Dictionary<(float moveX, float moveY), (MyScriptableObject.Direction direction, MyScriptableObject.ActionType actionType, string keyValue)> keyToAnimationMap =
-        new Dictionary<(float, float), (MyScriptableObject.Direction, MyScriptableObject.ActionType, string)>
+    private Dictionary<(float moveX, float moveY), (SpriteData.Direction direction, SpriteData.ActionType actionType, string keyValue)> keyToAnimationMap =
+        new Dictionary<(float, float), (SpriteData.Direction, SpriteData.ActionType, string)>
         {
-            { (0, 1), (MyScriptableObject.Direction.Up, MyScriptableObject.ActionType.Run, "W") },
-            { (-1, 0), (MyScriptableObject.Direction.Left, MyScriptableObject.ActionType.Run, "A") },
-            { (0, -1), (MyScriptableObject.Direction.Down, MyScriptableObject.ActionType.Run, "S") },
-            { (1, 0), (MyScriptableObject.Direction.Right, MyScriptableObject.ActionType.Run, "D") },
-            { (-1, 1), (MyScriptableObject.Direction.UpLeft, MyScriptableObject.ActionType.Run, "WA") },
-            { (-1, -1), (MyScriptableObject.Direction.DownLeft, MyScriptableObject.ActionType.Run, "AS") },
-            { (1, -1), (MyScriptableObject.Direction.DownRight, MyScriptableObject.ActionType.Run, "SD") },
-            { (1, 1), (MyScriptableObject.Direction.UpRight, MyScriptableObject.ActionType.Run, "WD") }
+            { (0, 1), (SpriteData.Direction.Up, SpriteData.ActionType.Run, "W") },
+            { (-1, 0), (SpriteData.Direction.Left, SpriteData.ActionType.Run, "A") },
+            { (0, -1), (SpriteData.Direction.Down, SpriteData.ActionType.Run, "S") },
+            { (1, 0), (SpriteData.Direction.Right, SpriteData.ActionType.Run, "D") },
+            { (-1, 1), (SpriteData.Direction.UpLeft, SpriteData.ActionType.Run, "WA") },
+            { (-1, -1), (SpriteData.Direction.DownLeft, SpriteData.ActionType.Run, "AS") },
+            { (1, -1), (SpriteData.Direction.DownRight, SpriteData.ActionType.Run, "SD") },
+            { (1, 1), (SpriteData.Direction.UpRight, SpriteData.ActionType.Run, "WD") }
         };
-    
-    /*private Dictionary<(float moveX, float moveY), (MyScriptableObject.Direction direction, MyScriptableObject.ActionType actionType, string keyValue)> keyToIdleAnimationMap =
-        new Dictionary<(float, float), (MyScriptableObject.Direction, MyScriptableObject.ActionType, string)>
-        {
-            { (0, 1), (MyScriptableObject.Direction.Up, MyScriptableObject.ActionType.Idle, "W") },
-            { (-1, 0), (MyScriptableObject.Direction.Left, MyScriptableObject.ActionType.Idle, "A") },
-            { (0, -1), (MyScriptableObject.Direction.Down, MyScriptableObject.ActionType.Idle, "S") },
-            { (1, 0), (MyScriptableObject.Direction.Right, MyScriptableObject.ActionType.Idle, "D") },
-            { (-1, 1), (MyScriptableObject.Direction.UpLeft, MyScriptableObject.ActionType.Idle, "WA") },
-            { (-1, -1), (MyScriptableObject.Direction.DownLeft, MyScriptableObject.ActionType.Idle, "AS") },
-            { (1, -1), (MyScriptableObject.Direction.DownRight, MyScriptableObject.ActionType.Idle, "SD") },
-            { (1, 1), (MyScriptableObject.Direction.UpRight, MyScriptableObject.ActionType.Idle, "WD") }
-        };*/
 
     private void HandleMovement(float moveX, float moveY, bool isMoving)
     {
-        var
-            key = isMoving? (moveX, moveY) : lastMoveKey; //This line is creating a tuple that stores two integer values, moveX and moveY. moveX and moveY are integers that are set based on which movement keys are being pressed.
+        var key = isMoving? (moveX, moveY) : lastMoveKey; //This line is creating a tuple that stores two integer values, moveX and moveY. moveX and moveY are integers that are set based on which movement keys are being pressed.
 
         if (isMoving)
         {
@@ -131,11 +120,7 @@ public class CharacterMovement : MonoBehaviour
                     //This line checks if the previous frame's keyValue is different from the current frame's keyValue. If they are different, it means the player has changed their movement direction.
                     lastKeyValue =
                         keyValue; //This line is updating lastKeyValue to the current keyValue. This is done to keep track of the previous frame's movement direction, which allows us to detect when the player changes their movement direction.
-                    OnKeyPress?.Invoke(this,
-                        new OnKeyPressEventArgs
-                        {
-                            keyValue = keyValue
-                        }); //This line invokes the OnKeyPress event, passing a new instance of OnKeyPressEventArgs with the current keyValue to any subscribed event handlers. The ? before Invoke is a null-conditional operator, which means Invoke will only be called if OnKeyPress is not null (i.e., if there are any subscribers to the OnKeyPress event).
+                    OnKeyPress?.Invoke(this, new OnKeyPressEventArgs{ keyValue = keyValue }); //This line invokes the OnKeyPress event, passing a new instance of OnKeyPressEventArgs with the current keyValue to any subscribed event handlers. The ? before Invoke is a null-conditional operator, which means Invoke will only be called if OnKeyPress is not null (i.e., if there are any subscribers to the OnKeyPress event).
                 }
 
                 Vector3 targetMovePosition = transform.position + moveDir * (speed * Time.deltaTime);
@@ -145,8 +130,7 @@ public class CharacterMovement : MonoBehaviour
                     //No Collision with objects
                     transform.position = targetMovePosition;
                     PlayAnimation(value.direction, value.actionType); //This line is calling the PlayAnimation method with the animationType obtained from the value tuple. This will start playing the animation corresponding to the current movement direction.
-                    keyValue = value
-                        .keyValue; //This line is setting the keyValue variable to the keyValue obtained from the value tuple. keyValue represents the keys that are currently being pressed (for example, "W" for up, "A" for left, "S" for down, "D" for right, etc).
+                    keyValue = value.keyValue; //This line is setting the keyValue variable to the keyValue obtained from the value tuple. keyValue represents the keys that are currently being pressed (for example, "W" for up, "A" for left, "S" for down, "D" for right, etc).
                 }
                 else
                 {
@@ -193,7 +177,7 @@ public class CharacterMovement : MonoBehaviour
                                 transform.position = targetMovePosition;
                                 PlayAnimation(value.direction, value.actionType);
                                 keyValue = value.keyValue;
-                                //OnCollision?.Invoke(this, new OnCollisionEventArgs { collisionVar = raycastHit });
+                                OnCollision?.Invoke(this, new OnCollisionEventArgs { collisionVar = raycastHit });
                             }
                             else
                             {
@@ -201,7 +185,7 @@ public class CharacterMovement : MonoBehaviour
                                 raycastHit = Physics2D.Raycast(transform.position, moveDir, speed * Time.deltaTime);
                                 OnCollision?.Invoke(this, new OnCollisionEventArgs { collisionVar = raycastHit });
                             }
-                            //OnCollision?.Invoke(this, new OnCollisionEventArgs { collisionVar = raycastHit });
+                            OnCollision?.Invoke(this, new OnCollisionEventArgs { collisionVar = raycastHit });
                         }
                     }
                 }
@@ -209,8 +193,7 @@ public class CharacterMovement : MonoBehaviour
         }
         else
         {
-            Debug.Log("Idle animation: " + currentAnimation.Length);
-            PlayAnimation(currentDirection, MyScriptableObject.ActionType.Idle);
+            PlayAnimation(currentDirection, SpriteData.ActionType.Idle);
             // keyValue = value.keyValue; //This line is setting the keyValue variable to the keyValue obtained from the value tuple. keyValue represents the keys that are currently being pressed (for example, "W" for up, "A" for left, "S" for down, "D" for right, etc).
             // if (lastKeyValue != keyValue)
             // {
@@ -223,41 +206,62 @@ public class CharacterMovement : MonoBehaviour
     // New method for handling player input
     private void HandlePlayerInput()
     {
-        float moveX = 0, moveY = 0;
-        bool isMoving = false;
+        Debug.Log("State at start of HandlePlayerInput: " + state);
 
-        if (Input.GetKey(KeyCode.W))
+        switch (state)
         {
-            moveY = 1;
-            isMoving = true;
+            case State.Idle:
+                bool isMoving = false;
+                float moveX = 0, moveY = 0;
+
+                if (Input.GetKey(KeyCode.W))
+                {
+                    moveY = 1;
+                    isMoving = true;
+                }
+
+                if (Input.GetKey(KeyCode.A))
+                {
+                    moveX = -1;
+                    isMoving = true;
+                }
+
+                if (Input.GetKey(KeyCode.S))
+                {
+                    moveY = -1;
+                    isMoving = true;
+                }
+
+                if (Input.GetKey(KeyCode.D))
+                {
+                    moveX = 1;
+                    isMoving = true;
+                }
+
+                if (Input.GetKey(KeyCode.Space))
+                {
+
+                }
+
+                if (Input.GetMouseButtonDown(0))
+                {
+                    OnCharacterAttack?.Invoke(this, EventArgs.Empty);
+                    Vector3 mousePosition = UsefulFunctions.GetMouseWorldPosition();
+                    Vector3 attackDirection = (mousePosition - transform.position).normalized;
+                    direction = UsefulFunctions.getDirectionFromCoordinates(attackDirection.x, attackDirection.y);
+                    Debug.Log("Direction X: " + attackDirection.x);
+                    Debug.Log("Direction Y: " + attackDirection.y);
+                    Debug.Log("Direction: " + direction);
+                    state = State.Attacking;
+                    PlayAnimation(direction, SpriteData.ActionType.Attack, () => state = State.Idle);
+                }
+                
+                if (isMoving) lastMoveKey = (moveX, moveY);
+                HandleMovement(moveX, moveY, isMoving);
+                break;
+            case State.Attacking:
+                break;
         }
-
-        if (Input.GetKey(KeyCode.A))
-        {
-            moveX = -1;
-            isMoving = true;
-        }
-
-        if (Input.GetKey(KeyCode.S))
-        {
-            moveY = -1;
-            isMoving = true;
-        }
-
-        if (Input.GetKey(KeyCode.D))
-        {
-            moveX = 1;
-            isMoving = true;
-        }
-
-        if (Input.GetMouseButtonDown(0))
-        {
-            PlayAnimation(MyScriptableObject.Direction.Left, MyScriptableObject.ActionType.Attack);
-        }
-
-        if (isMoving) lastMoveKey = (moveX, moveY);
-
-        HandleMovement(moveX, moveY, isMoving);
     }
 
     private void HandleAnimation()
@@ -275,6 +279,11 @@ public class CharacterMovement : MonoBehaviour
             if (!loop && currentFrame == 0)
             {
                 StopAnimating();
+                
+                animationEndCallback?.Invoke();
+                animationEndCallback = null; // Clear the callback to prevent re-invoking it
+                state = State.Idle;
+                PlayAnimation(currentDirection, SpriteData.ActionType.Idle);
             }
             else
             {
@@ -282,32 +291,40 @@ public class CharacterMovement : MonoBehaviour
             }
         }
     }
-
-    private void PlayAnimation(MyScriptableObject.Direction direction, MyScriptableObject.ActionType actionType)
+    public void PlayAnimation(Sprite[] spriteArray, float frameRate, Action callback = null)
     {
-        Debug.Log("Direction: " + direction);
-        Debug.Log("Current Direction: " + currentDirection);
-        Debug.Log("ActionType: " + actionType);
-        Debug.Log("Current ActionType: " + currentActionType);
+        this.spriteArray = spriteArray;
+        this.frameRate = frameRate;
+        currentFrame = 0;
+        timer = 0;
+        spriteRenderer.sprite = spriteArray[currentFrame];
+        
+        // This is the change: Store the callback for later use
+        this.animationEndCallback = callback;
+        animationEndCallback?.Invoke();
+        
+        Debug.Log("animationEndCallback: " + animationEndCallback);
+
+        animationEndCallback = null; 
+    }
+
+    public void PlayAnimation(SpriteData.Direction direction, SpriteData.ActionType actionType, Action callback = null)
+    {
         if (direction != currentDirection || actionType != currentActionType)
         {
             currentDirection = direction;
             currentActionType = actionType;
-
-            Debug.Log("Reached the playAnimation(x, y) Switch Statement: " + direction + "  " + actionType);
+            Debug.Log("State: " + state);
             switch (actionType)
             {
-                case MyScriptableObject.ActionType.Idle:
-                    actionType = MyScriptableObject.ActionType.Idle;
-                    Debug.Log("I got to ActionType.Idle: " + direction + "  " + actionType);
+                case SpriteData.ActionType.Idle:
+                    actionType = SpriteData.ActionType.Idle;
                     break;
-                case MyScriptableObject.ActionType.Run:
-                    actionType = MyScriptableObject.ActionType.Run;
-                    Debug.Log("I got to ActionType.Run: " + direction + "  " + actionType);
+                case SpriteData.ActionType.Run:
+                    actionType = SpriteData.ActionType.Run;
                     break;
-                case MyScriptableObject.ActionType.Attack:
-                    actionType = MyScriptableObject.ActionType.Attack;
-                    Debug.Log("I got to ActionType.Attack: " + direction + "  " + actionType);
+                case SpriteData.ActionType.Attack:
+                    actionType = SpriteData.ActionType.Attack;
                     break;
                 default:
                     throw new System.ArgumentOutOfRangeException("Unknown ActionType: " + actionType);
@@ -315,29 +332,29 @@ public class CharacterMovement : MonoBehaviour
 
             switch (direction)
             {
-                case MyScriptableObject.Direction.Up:
-                    PlayAnimation(animationSprites.GetAnimation(direction, actionType), 0.1f); ;
+                case SpriteData.Direction.Up:
+                    PlayAnimation(spriteData.GetAnimation(direction, actionType), 0.1f, callback); ;
                     break;
-                case MyScriptableObject.Direction.Left:
-                    PlayAnimation(animationSprites.GetAnimation(direction, actionType), 0.1f); ;
+                case SpriteData.Direction.Left:
+                    PlayAnimation(spriteData.GetAnimation(direction, actionType), 0.1f, callback); ;
                     break;
-                case MyScriptableObject.Direction.Down:
-                    PlayAnimation(animationSprites.GetAnimation(direction, actionType), 0.1f); ;
+                case SpriteData.Direction.Down:
+                    PlayAnimation(spriteData.GetAnimation(direction, actionType), 0.1f, callback); ;
                     break;
-                case MyScriptableObject.Direction.Right:
-                    PlayAnimation(animationSprites.GetAnimation(direction, actionType), 0.1f); ;
+                case SpriteData.Direction.Right:
+                    PlayAnimation(spriteData.GetAnimation(direction, actionType), 0.1f, callback); ;
                     break;
-                case MyScriptableObject.Direction.UpLeft:
-                    PlayAnimation(animationSprites.GetAnimation(direction, actionType), 0.1f); ;
+                case SpriteData.Direction.UpLeft:
+                    PlayAnimation(spriteData.GetAnimation(direction, actionType), 0.1f, callback); ;
                     break;
-                case MyScriptableObject.Direction.DownLeft:
-                    PlayAnimation(animationSprites.GetAnimation(direction, actionType), 0.1f); ;
+                case SpriteData.Direction.DownLeft:
+                    PlayAnimation(spriteData.GetAnimation(direction, actionType), 0.1f, callback); ;
                     break;
-                case MyScriptableObject.Direction.DownRight:
-                    PlayAnimation(animationSprites.GetAnimation(direction, actionType), 0.1f); ;
+                case SpriteData.Direction.DownRight:
+                    PlayAnimation(spriteData.GetAnimation(direction, actionType), 0.1f, callback); ;
                     break;
-                case MyScriptableObject.Direction.UpRight:
-                    PlayAnimation(animationSprites.GetAnimation(direction, actionType), 0.1f); ;
+                case SpriteData.Direction.UpRight:
+                    PlayAnimation(spriteData.GetAnimation(direction, actionType), 0.1f, callback); ;
                     break;
             }
         }

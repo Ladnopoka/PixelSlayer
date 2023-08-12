@@ -9,13 +9,25 @@ using Debug = UnityEngine.Debug;
 
 public class Attack : MonoBehaviour
 {
-    // Define the event for other classes to subscribe to
-    public event EventHandler OnCharacterAttack;
+    public SpriteData _spriteData;
+    public CharacterMovement _characterMovement;
+    private (float, float) lastMoveKey;
+    
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            OnCharacterAttack?.Invoke(this, EventArgs.Empty);
-        }
+        
     }
+
+    private void playAttackAnimation(SpriteData.Direction direction, (float, float) lastMoveKey)
+    {
+        
+        Debug.Log("Playing attack animation with direction" + direction);
+        _characterMovement.PlayAnimation(direction, SpriteData.ActionType.Attack);
+    }
+    
+    private void HandlePlayerInput()
+    {
+
+    }
+
 }
