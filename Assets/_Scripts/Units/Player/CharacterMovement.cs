@@ -327,7 +327,7 @@ public class CharacterMovement : MonoBehaviour
                     actionType = SpriteData.ActionType.Attack;
                     break;
                 default:
-                    throw new System.ArgumentOutOfRangeException("Unknown ActionType: " + actionType);
+                    throw new System.ArgumentOutOfRangeException("Unknown ActionType:  " + actionType);
             }
 
             switch (direction)
